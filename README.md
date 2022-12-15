@@ -31,6 +31,17 @@ Now, open Flax Editor and add new `DLSS` settings (via *Content* window **New ->
 
 Finally you can use DLSS for image upscaling. DLSS extension will be visible in Plugins window (under Rendering category). It implements `CustomUpscale` postFx to increase visual quality when using low-res rendering. To test it simply start the game and adjust the **Rendering Percentage** property in *Graphics Quality Window*. Use plugin API to adjust DLSS quality and setup proper `RenderingPercentage` of the game rendering based on optimal settings from NVIDIA.
 
+## Supported Platforms
+
+Platforms:
+* Windows x64
+* Linux x64 (untested)
+
+Graphics APIs:
+* DirectX 11
+* DirectX 12
+* Vulkan (untested)
+
 ## API
 
 In order to access DLSS API in C++/C# scripting import it in your code module (modify `Game.Build.cs` file):
