@@ -1,0 +1,3 @@
+[submodule "Source/ThirdParty/DLSS"]
+	path = Source/ThirdParty/DLSS
+	url = https://github.com/NVIDIA/DLSS

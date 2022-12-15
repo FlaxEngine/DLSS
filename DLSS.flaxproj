@@ -1,0 +1,14 @@
+{
+	"Name": "DLSS",
+	"Version": "2.4",
+	"MinEngineVersion": "1.5",
+	"Company": "NVIDIA",
+	"Copyright": "Copyright (c) 2022 NVIDIA CORPORATION. All rights reserved.",
+	"GameTarget": "DLSSTarget",
+	"EditorTarget": "DLSSEditorTarget",
+	"References": [
+		{
+			"Name": "$(EnginePath)/Flax.flaxproj"
+		}
+	]
+}
