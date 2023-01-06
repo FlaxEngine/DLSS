@@ -16,6 +16,8 @@ API_CLASS(Namespace="NVIDIA") class DLSS_API DLSS : public GamePlugin
 
 private:
     NGXWrapper _ngx;
+    DLSSSupport _support = DLSSSupport::NotSupported;
+    bool _delayInit = false;
 
 public:
     /// <summary>
@@ -26,7 +28,7 @@ public:
     /// <summary>
     /// DLSS support information.
     /// </summary>
-    API_FIELD() DLSSSupport Support = DLSSSupport::NotSupported;
+    API_PROPERTY() DLSSSupport GetSupport() const;
 
     /// <summary>
     /// DLSS upscaling quality.
@@ -51,6 +53,9 @@ public:
     /// <param name="result">Output settings.</param>
     /// <param name="quality">DLSS quality, MAX to use current setting.</param>
     API_FUNCTION() void QueryRecommendedSettings(API_PARAM(ref) const Int2& displaySize, API_PARAM(Out) DLSSRecommendedSettings& result, DLSSQuality quality = DLSSQuality::MAX);
+
+private:
+    void DelayInit();
 
 public:
     // [GamePlugin]

@@ -13,15 +13,18 @@ DLSSPostFx::DLSSPostFx(const SpawnParams& params)
     Location = PostProcessEffectLocation::CustomUpscale;
 }
 
-bool DLSSPostFx::CanRender() const
+bool DLSSPostFx::CanRender(const RenderContext& renderContext) const
 {
+    if (renderContext.Task->RenderingPercentage >= 1.0f)
+        return false;
+
     auto dlss = PluginManager::GetPlugin<DLSS>();
-    return PostProcessEffect::CanRender() && dlss && dlss->Support == DLSSSupport::Supported;
+    return PostProcessEffect::CanRender() && dlss && dlss->GetSupport() == DLSSSupport::Supported;
 }
 
 void DLSSPostFx::PreRender(GPUContext* context, RenderContext& renderContext)
 {
-    if (renderContext.Task->RenderingPercentage >= 1.0f)
+    if (!CanRender(renderContext))
         return;
 
     // Override upscaling location to happen before PostFx

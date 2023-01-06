@@ -18,6 +18,10 @@ public:
     uint32 AppId = 0;
 
     // Project ID to pass for DLSS to identify the project. Empty if unused.
-    API_FIELD(Attributes="EditorOrder(0)")
+    API_FIELD(Attributes="EditorOrder(10)")
     StringAnsi ProjectId;
+
+    // If checked, DLSS initialization will be delayed until actually used.
+    API_FIELD(Attributes="EditorOrder(100)")
+    bool LazyInit = true;
 };

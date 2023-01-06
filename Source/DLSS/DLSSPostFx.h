@@ -10,7 +10,7 @@ API_CLASS(Namespace="NVIDIA") class DLSS_API DLSSPostFx : public PostProcessEffe
     DECLARE_SCRIPTING_TYPE(DLSSPostFx);
 public:
     // [PostProcessEffect]
-    bool CanRender() const override;
+    bool CanRender(const RenderContext& renderContext) const override;
     void PreRender(GPUContext* context, RenderContext& renderContext) override;
     void Render(GPUContext* context, RenderContext& renderContext, GPUTexture* input, GPUTexture* output) override;
 };

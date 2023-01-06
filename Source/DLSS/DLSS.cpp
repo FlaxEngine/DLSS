@@ -6,6 +6,7 @@
 #include "Engine/Content/Content.h"
 #include "Engine/Content/JsonAsset.h"
 #include "Engine/Graphics/RenderTask.h"
+#include "Engine/Profiler/ProfilerCPU.h"
 
 IMPLEMENT_GAME_SETTINGS_GETTER(DLSSSettings, "DLSS");
 
@@ -20,6 +21,13 @@ DLSS::DLSS(const SpawnParams& params)
     _description.RepositoryUrl = TEXT("https://github.com/FlaxEngine/DLSS");
 #endif
     _description.Version = Version(2, 4, 0);
+}
+
+DLSSSupport DLSS::GetSupport() const
+{
+    if (_delayInit)
+        const_cast<DLSS*>(this)->DelayInit();
+    return _support;
 }
 
 void DLSS::ApplyRecommendedSettings(DLSSQuality quality)
@@ -41,23 +49,33 @@ void DLSS::QueryRecommendedSettings(const Int2& displaySize, DLSSRecommendedSett
     _ngx.QueryRecommendedSettings(displaySize, result, quality);
 }
 
-void DLSS::Initialize()
+void DLSS::DelayInit()
 {
-    GamePlugin::Initialize();
-
-    Support = DLSSSupport::NotSupported;
+    PROFILE_CPU();
+    _delayInit = false;
     const auto settings = DLSSSettings::Get();
     LOG(Info, "Initializing DLSS with AppId={}, ProjectId={}", settings->AppId, String(settings->ProjectId));
-
-    if (_ngx.Initialize(settings->AppId, settings->ProjectId, Support))
+    if (_ngx.Initialize(settings->AppId, settings->ProjectId, _support))
     {
         LOG(Warning, "DLSS is not supported on this platform.");
         return;
     }
+}
+
+void DLSS::Initialize()
+{
+    GamePlugin::Initialize();
 
     // TODO: apply global mip bias to texture groups samplers to increase texturing quality
     PostFx = New<DLSSPostFx>();
     SceneRenderTask::AddGlobalCustomPostFx(PostFx);
+
+    const auto settings = DLSSSettings::Get();
+    _support = DLSSSupport::NotSupported;
+    _delayInit = settings->LazyInit;
+    if (_delayInit)
+        return;
+    DelayInit();
 }
 
 void DLSS::Deinitialize()
