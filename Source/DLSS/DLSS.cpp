@@ -20,7 +20,7 @@ DLSS::DLSS(const SpawnParams& params)
     _description.Author = TEXT("NVIDIA");
     _description.RepositoryUrl = TEXT("https://github.com/FlaxEngine/DLSS");
 #endif
-    _description.Version = Version(2, 4, 0);
+    _description.Version = Version(3, 1, 0);
 }
 
 DLSSSupport DLSS::GetSupport() const

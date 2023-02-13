@@ -171,23 +171,25 @@ void NGXWrapper::Shutdown()
 
     _capabilityParameters = nullptr;
     NVSDK_NGX_Result result = NVSDK_NGX_Result_Fail;
+    auto gpuDevice = GPUDevice::Instance;
+    void* gpuDeviceNative = gpuDevice->GetNativePtr();
     switch (_rendererType)
     {
     case RendererType::DirectX11:
         if (_parametersObject)
             NVSDK_NGX_D3D11_DestroyParameters(_parametersObject);
-        result = NVSDK_NGX_D3D11_Shutdown();
+        result = NVSDK_NGX_D3D11_Shutdown1((ID3D11Device*)gpuDeviceNative);
         break;
     case RendererType::DirectX12:
         if (_parametersObject)
             NVSDK_NGX_D3D12_DestroyParameters(_parametersObject);
-        result = NVSDK_NGX_D3D12_Shutdown();
+        result = NVSDK_NGX_D3D12_Shutdown1((ID3D12Device*)gpuDeviceNative);
         break;
 #if GRAPHICS_API_VULKAN
     case RendererType::Vulkan:
         if (_parametersObject)
             NVSDK_NGX_VULKAN_DestroyParameters(_parametersObject);
-        result = NVSDK_NGX_VULKAN_Shutdown();
+        result = NVSDK_NGX_VULKAN_Shutdown1((VkDevice)((void**)gpuDeviceNative)[1]);
         break;
 #endif
     }
