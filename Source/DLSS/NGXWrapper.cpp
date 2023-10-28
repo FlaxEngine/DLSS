@@ -122,9 +122,9 @@ bool NGXWrapper::Initialize(uint32 appId, const StringAnsi& projectId, DLSSSuppo
         else if (result == NVSDK_NGX_Result_FAIL_FeatureNotSupported)
             support = DLSSSupport::NotSupportedIncompatibleHardware;
         if (result == NVSDK_NGX_Result_FAIL_FeatureNotSupported || result == NVSDK_NGX_Result_FAIL_PlatformError)
-            LOG(Warning, "NVIDIA NGX not available on this hardware/platform. Error code: 0x{:x}, {}", result, GetNGXResultAsString(result));
+            LOG(Warning, "NVIDIA NGX not available on this hardware/platform. Error code: 0x{:x}, {}", (uint32)result, GetNGXResultAsString(result));
         else
-            LOG(Error, "Failed to initialize NGX. Error code: 0x{:x}, {}", result, GetNGXResultAsString(result));
+            LOG(Error, "Failed to initialize NGX. Error code: 0x{:x}, {}", (uint32)result, GetNGXResultAsString(result));
         return true;
     }
 
@@ -145,7 +145,7 @@ bool NGXWrapper::Initialize(uint32 appId, const StringAnsi& projectId, DLSSSuppo
     }
     if (NVSDK_NGX_FAILED(result) || !_capabilityParameters)
     {
-        LOG(Error, "Failed to get NGX capability parameters. Error code: 0x{:x}, {}", result, GetNGXResultAsString(result));
+        LOG(Error, "Failed to get NGX capability parameters. Error code: 0x{:x}, {}", (uint32)result, GetNGXResultAsString(result));
         return true;
     }
     {
@@ -198,7 +198,7 @@ void NGXWrapper::Shutdown()
     _params = NGXParams();
     if (NVSDK_NGX_FAILED(result))
     {
-        LOG(Error, "Failed to shutdown NGX. Error code: 0x{:x}, {}", result, GetNGXResultAsString(result));
+        LOG(Error, "Failed to shutdown NGX. Error code: 0x{:x}, {}", (uint32)result, GetNGXResultAsString(result));
     }
 }
 
@@ -273,7 +273,7 @@ void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderConte
         }
         if (NVSDK_NGX_FAILED(result))
         {
-            LOG(Error, "Failed to create params. Error code: 0x{:x}, {}", result, GetNGXResultAsString(result));
+            LOG(Error, "Failed to create params. Error code: 0x{:x}, {}", (uint32)result, GetNGXResultAsString(result));
             return;
         }
     }
@@ -377,7 +377,7 @@ void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderConte
     }
     if (NVSDK_NGX_FAILED(result))
     {
-        LOG(Error, "Failed to evaluate DLSS. Error code: 0x{:x}, {}", result, GetNGXResultAsString(result));
+        LOG(Error, "Failed to evaluate DLSS. Error code: 0x{:x}, {}", (uint32)result, GetNGXResultAsString(result));
         return;
     }
     context->ClearState();
