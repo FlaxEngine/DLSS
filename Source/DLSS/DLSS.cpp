@@ -15,7 +15,7 @@ DLSS::DLSS(const SpawnParams& params)
 {
     _description.Name = TEXT("DLSS");
 #if USE_EDITOR
-    _description.Category = TEXT("Rendering";)
+    _description.Category = TEXT("Rendering");
     _description.Description = TEXT("DLSS is a revolutionary breakthrough in AI-powered graphics upscaling technology that massively boosts performance.");
     _description.Author = TEXT("NVIDIA");
     _description.RepositoryUrl = TEXT("https://github.com/FlaxEngine/DLSS");
