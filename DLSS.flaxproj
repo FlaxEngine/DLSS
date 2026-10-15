@@ -1,7 +1,7 @@
 {
 	"Name": "DLSS",
 	"Version": "3.1",
-	"MinEngineVersion": "1.5",
+	"MinEngineVersion": "1.13",
 	"Company": "NVIDIA",
 	"Copyright": "Copyright (c) 2022 NVIDIA CORPORATION. All rights reserved.",
 	"GameTarget": "DLSSTarget",
