@@ -3,6 +3,7 @@
 #include "Engine/Profiler/Profiler.h"
 #include "Engine/Scripting/Plugins/PluginManager.h"
 #include "Engine/Graphics/GPUContext.h"
+#include "Engine/Graphics/RenderContext.h"
 #include "Engine/Graphics/RenderTargetPool.h"
 #include "Engine/Graphics/Textures/GPUTexture.h"
 #include "Engine/Renderer/RenderList.h"
@@ -15,7 +16,7 @@ DLSSPostFx::DLSSPostFx(const SpawnParams& params)
 
 bool DLSSPostFx::CanRender(const RenderContext& renderContext) const
 {
-    if (renderContext.Task->RenderingPercentage >= 1.0f)
+    if (renderContext.Task->RenderScale >= 1.0f)
         return false;
 
     auto dlss = PluginManager::GetPlugin<DLSS>();
@@ -28,7 +29,7 @@ void DLSSPostFx::PreRender(GPUContext* context, RenderContext& renderContext)
         return;
 
     // Override upscaling location to happen before PostFx
-    renderContext.List->Setup.UpscaleLocation = RenderingUpscaleLocation::BeforePostProcessingPass;
+    renderContext.List->Setup.UpscaleLocation = RenderingUpscaleLocation::BeforePostProcessing;
 
     // Enable temporal jitter
     renderContext.List->Setup.UseTemporalAAJitter = true;
