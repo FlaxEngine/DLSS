@@ -55,9 +55,8 @@ void DLSSPostFx::Render(GPUContext* context, RenderContext& renderContext, GPUTe
 
     // Run DLSS
     auto dlss = PluginManager::GetPlugin<DLSS>();
-    const float sharpness = Math::Clamp(dlss->Sharpness, -1.0f, 1.0f);
     const Float2 pixelOffset(renderContext.View.TemporalAAJitter.X * renderContext.View.ScreenSize.X / 2.0f, renderContext.View.TemporalAAJitter.X * renderContext.View.ScreenSize.Y / 2.0f);
-    dlss->_ngx.TemporalResolve(context, renderContext, input, dlssOutput, dlss->Quality, pixelOffset, sharpness);
+    dlss->_ngx.TemporalResolve(context, renderContext, input, dlssOutput, dlss->Quality, pixelOffset);
 
     // Copy back results
     if (dlssOutput != output)

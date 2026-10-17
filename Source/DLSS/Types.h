@@ -48,12 +48,12 @@ API_STRUCT(Namespace="NVIDIA") struct DLSS_API DLSSRecommendedSettings
 {
     DECLARE_SCRIPTING_TYPE_MINIMAL(DLSSRecommendedSettings);
 
+    // Optimal render scale.
+    API_FIELD() float RenderScale;
     // Optimal render resolution value.
     API_FIELD() Int2 ResolutionOptimal;
     // Optimal render minimum resolution value (if using dynamic resolution).
     API_FIELD() Int2 ResolutionMin;
     // Optimal render maximum resolution value (if using dynamic resolution).
     API_FIELD() Int2 ResolutionMax;
-    // Optimal sharpness parameter value.
-    API_FIELD() float Sharpness;
 };

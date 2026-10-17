@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using Flax.Build;
 using Flax.Build.NativeCpp;
 
@@ -27,6 +28,7 @@ public class DLSS : GameModule
             switch (options.Architecture)
             {
             case TargetArchitecture.x64:
+            case TargetArchitecture.ARM64:
                 result = true;
                 break;
             }
@@ -46,6 +48,7 @@ public class DLSS : GameModule
 
         // Link against DLSS library
         options.PrivateIncludePaths.Add(Path.Combine(FolderPath, "../ThirdParty/DLSS/include"));
+        var libPath = Path.Combine(FolderPath, "../ThirdParty/DLSS/lib");
         switch (options.Platform.Target)
         {
         case TargetPlatform.Windows:
@@ -53,11 +56,20 @@ public class DLSS : GameModule
             {
                 case TargetArchitecture.x64:
                 {
-                    var libPath = Flax.Build.Utilities.RemovePathRelativeParts(Path.Combine(FolderPath, "../ThirdParty/DLSS/lib/Windows_x86_64"));
+                    switch (options.Architecture)
+                    {
+                        case TargetArchitecture.x64:
+                            libPath = Path.Combine(libPath, "Windows_x86_64");
+                            break;
+                        case TargetArchitecture.ARM64:
+                            libPath = Path.Combine(libPath, "Windows_aarch64");
+                            break;
+                    }
+                    libPath = Flax.Build.Utilities.RemovePathRelativeParts(libPath);
                     if (options.CompileEnv.UseDebugCRT)
-                        options.LinkEnv.InputFiles.Add(Path.Combine(libPath, "x86_64/nvsdk_ngx_d_dbg.lib"));
+                        options.LinkEnv.InputFiles.Add(Path.Combine(libPath, "x64/nvsdk_ngx_d_dbg.lib"));
                     else
-                        options.LinkEnv.InputFiles.Add(Path.Combine(libPath, "x86_64/nvsdk_ngx_d.lib"));
+                        options.LinkEnv.InputFiles.Add(Path.Combine(libPath, "x64/nvsdk_ngx_d.lib"));
                     if (options.Configuration == TargetConfiguration.Release)
                         options.DependencyFiles.Add(Path.Combine(libPath, "rel\\nvngx_dlss.dll"));
                     else
@@ -73,13 +85,22 @@ public class DLSS : GameModule
             switch (options.Architecture)
             {
                 case TargetArchitecture.x64:
+                case TargetArchitecture.ARM64:
                 {
-                    var libPath = Path.Combine(FolderPath, "../ThirdParty/DLSS/lib/Linux_x86_64");
+                    switch (options.Architecture)
+                    {
+                        case TargetArchitecture.x64:
+                            libPath = Path.Combine(libPath, "Linux_x86_64");
+                            break;
+                        case TargetArchitecture.ARM64:
+                            libPath = Path.Combine(libPath, "Linux_aarch64");
+                            break;
+                    }
                     options.LinkEnv.InputFiles.Add(Path.Combine(libPath, "libnvsdk_ngx.a"));
                     if (options.Configuration == TargetConfiguration.Release)
-                        options.DependencyFiles.Add(Path.Combine(libPath, "rel/libnvidia-ngx-dlss.so.2.4.0"));
+                        options.DependencyFiles.Add(Path.Combine(libPath, "rel/libnvidia-ngx-dlss.so.310.9.16"));
                     else
-                        options.DependencyFiles.Add(Path.Combine(libPath, "dev/libnvidia-ngx-dlss.so.2.4.0"));
+                        options.DependencyFiles.Add(Path.Combine(libPath, "dev/libnvidia-ngx-dlss.so.310.9.16"));
                     break;
                 }
                 default:

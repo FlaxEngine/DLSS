@@ -38,15 +38,15 @@ void DLSS::ApplyRecommendedSettings(DLSSQuality quality)
     DLSSRecommendedSettings settings;
     const Float2 outputSize = task->GetOutputViewport().Size;
     QueryRecommendedSettings(outputSize, settings, quality);
-    task->RenderingPercentage = Math::Min((float)settings.ResolutionOptimal.X / outputSize.X, (float)settings.ResolutionOptimal.Y / outputSize.Y);
-    Sharpness = settings.Sharpness;
+	task->RenderScale = settings.RenderScale;
 }
 
-void DLSS::QueryRecommendedSettings(const Int2& displaySize, DLSSRecommendedSettings& result, DLSSQuality quality)
+void DLSS::QueryRecommendedSettings(const Int2& displaySize, DLSSRecommendedSettings& result, DLSSQuality quality) const
 {
     if (quality == DLSSQuality::MAX)
         quality = Quality;
     _ngx.QueryRecommendedSettings(displaySize, result, quality);
+    result.RenderScale = Math::Min((float)result.ResolutionOptimal.X / (float)displaySize.X, (float)result.ResolutionOptimal.Y / (float)displaySize.Y);
 }
 
 void DLSS::DelayInit()

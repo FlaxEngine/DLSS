@@ -209,7 +209,8 @@ void NGXWrapper::QueryRecommendedSettings(const Int2& displaySize, DLSSRecommend
     {
         NVSDK_NGX_PerfQuality_Value dlssQuality = GetQuality(quality);
         uint32 renderOptimalX, renderOptimalY, renderMinX, renderMinY, renderMaxX, renderMaxY;
-        const NVSDK_NGX_Result result = NGX_DLSS_GET_OPTIMAL_SETTINGS(_capabilityParameters, displaySize.X, displaySize.Y, dlssQuality, &renderOptimalX, &renderOptimalY, &renderMaxX, &renderMaxY, &renderMinX, &renderMinY, &output.Sharpness);
+        float sharpness = 0.0f;
+        const NVSDK_NGX_Result result = NGX_DLSS_GET_OPTIMAL_SETTINGS(_capabilityParameters, displaySize.X, displaySize.Y, dlssQuality, &renderOptimalX, &renderOptimalY, &renderMaxX, &renderMaxY, &renderMinX, &renderMinY, &sharpness);
         if (NVSDK_NGX_SUCCEED(result))
         {
             output.ResolutionOptimal.X = (int32)renderOptimalX;
@@ -224,10 +225,9 @@ void NGXWrapper::QueryRecommendedSettings(const Int2& displaySize, DLSSRecommend
     output.ResolutionOptimal = displaySize;
     output.ResolutionMin = displaySize;
     output.ResolutionMax = displaySize;
-    output.Sharpness = 0.0f;
 }
 
-void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderContext, GPUTexture* input, GPUTexture* output, DLSSQuality quality, const Float2& pixelOffset, float sharpness)
+void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderContext, GPUTexture* input, GPUTexture* output, DLSSQuality quality, const Float2& pixelOffset)
 {
     ASSERT(_initialized);
     NVSDK_NGX_Result result = NVSDK_NGX_Result_Fail;
@@ -238,7 +238,6 @@ void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderConte
     params.SrcSize = input->Size();
     params.DstSize = output->Size();
     params.Quality = quality;
-    params.UseSharpness = !Math::IsZero(sharpness);
     if (params != _params)
     {
         _params = params;
@@ -250,7 +249,6 @@ void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderConte
         createParams.Feature.InTargetHeight = params.DstSize.Y;
         createParams.Feature.InPerfQualityValue = GetQuality(quality);
         createParams.InFeatureCreateFlags |= NVSDK_NGX_DLSS_Feature_Flags_IsHDR;
-        createParams.InFeatureCreateFlags |= params.UseSharpness ? NVSDK_NGX_DLSS_Feature_Flags_DoSharpening : 0;
         createParams.InFeatureCreateFlags |= NVSDK_NGX_DLSS_Feature_Flags_AutoExposure;
         switch (_rendererType)
         {
@@ -309,7 +307,6 @@ void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderConte
             evalParams.InRenderSubrectDimensions.Height = params.SrcSize.Y;
             evalParams.pInExposureTexture = nullptr;
             evalParams.InPreExposure = 0.0f;
-            evalParams.Feature.InSharpness = sharpness;
             evalParams.InJitterOffsetX = pixelOffset.X;
             evalParams.InJitterOffsetY = pixelOffset.Y;
             evalParams.InMVScaleX = (float)params.SrcSize.X; // scale motion vectors from normalized [-1;1] to pixel-space
@@ -333,7 +330,6 @@ void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderConte
             evalParams.InRenderSubrectDimensions.Height = params.SrcSize.Y;
             evalParams.pInExposureTexture = nullptr;
             evalParams.InPreExposure = 0.0f;
-            evalParams.Feature.InSharpness = sharpness;
             evalParams.InJitterOffsetX = pixelOffset.X;
             evalParams.InJitterOffsetY = pixelOffset.Y;
             evalParams.InMVScaleX = (float)params.SrcSize.X; // scale motion vectors from normalized [-1;1] to pixel-space
@@ -362,7 +358,6 @@ void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderConte
             evalParams.InRenderSubrectDimensions.Height = params.SrcSize.Y;
             evalParams.pInExposureTexture = nullptr;
             evalParams.InPreExposure = 0.0f;
-            evalParams.Feature.InSharpness = sharpness;
             evalParams.InJitterOffsetX = pixelOffset.X;
             evalParams.InJitterOffsetY = pixelOffset.Y;
             evalParams.InMVScaleX = (float)params.SrcSize.X; // scale motion vectors from normalized [-1;1] to pixel-space
@@ -381,5 +376,5 @@ void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderConte
         LOG(Error, "Failed to evaluate DLSS. Error code: 0x{:x}, {}", (uint32)result, GetNGXResultAsString(result));
         return;
     }
-    context->ClearState();
+    context->ResetState();
 }
