@@ -61,11 +61,25 @@ NVSDK_NGX_PerfQuality_Value GetQuality(DLSSQuality quality)
     }
 }
 
+template<typename T>
+void InitParams(T& evalParams, const NGXParams& params, RenderContext& renderContext, const Float2& pixelOffset)
+{
+    Platform::MemoryClear(&evalParams, sizeof(evalParams));
+    evalParams.InRenderSubrectDimensions.Width = params.SrcSize.X;
+    evalParams.InRenderSubrectDimensions.Height = params.SrcSize.Y;
+    evalParams.InJitterOffsetX = pixelOffset.X;
+    evalParams.InJitterOffsetY = pixelOffset.Y;
+    evalParams.InMVScaleX = -(float)params.SrcSize.X; // scale motion vectors from normalized [-1;1] to pixel-space, flip the direction tho
+    evalParams.InMVScaleY = -(float)params.SrcSize.Y;
+    evalParams.InReset = renderContext.Task->IsCameraCut;
+    evalParams.InFrameTimeDeltaInMsec = (float)Time::Draw.UnscaledDeltaTime.GetTotalMilliseconds();
+}
+
 bool NGXWrapper::Initialize(uint32 appId, const StringAnsi& projectId, DLSSSupport& support)
 {
     // Check DLSS support
     auto gpuDevice = GPUDevice::Instance;
-    if (!gpuDevice->Limits.HasCompute || !gpuDevice->GetAdapter()->IsNVIDIA())
+    if (!gpuDevice->Limits.HasCompute)
     {
         support = DLSSSupport::NotSupportedIncompatibleHardware;
         return true;
@@ -250,6 +264,10 @@ void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderConte
         createParams.Feature.InPerfQualityValue = GetQuality(quality);
         createParams.InFeatureCreateFlags |= NVSDK_NGX_DLSS_Feature_Flags_IsHDR;
         createParams.InFeatureCreateFlags |= NVSDK_NGX_DLSS_Feature_Flags_AutoExposure;
+        createParams.InFeatureCreateFlags |= NVSDK_NGX_DLSS_Feature_Flags_MVLowRes;
+#if REVERSE_Z
+        createParams.InFeatureCreateFlags |= NVSDK_NGX_DLSS_Feature_Flags_DepthInverted;
+#endif
         switch (_rendererType)
         {
         case RendererType::DirectX11:
@@ -298,46 +316,22 @@ void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderConte
     case RendererType::DirectX11:
         {
             NVSDK_NGX_D3D11_DLSS_Eval_Params evalParams;
-            Platform::MemoryClear(&evalParams, sizeof(evalParams));
+            InitParams(evalParams, params, renderContext, pixelOffset);
             evalParams.Feature.pInOutput = (ID3D11Resource*)output->GetNativePtr();
             evalParams.Feature.pInColor = (ID3D11Resource*)input->GetNativePtr();
             evalParams.pInDepth = (ID3D11Resource*)renderContext.Task->Buffers->DepthBuffer->GetNativePtr();
             evalParams.pInMotionVectors = renderContext.Task->Buffers->MotionVectors ? (ID3D11Resource*)renderContext.Task->Buffers->MotionVectors->GetNativePtr() : nullptr;
-            evalParams.InRenderSubrectDimensions.Width = params.SrcSize.X;
-            evalParams.InRenderSubrectDimensions.Height = params.SrcSize.Y;
-            evalParams.pInExposureTexture = nullptr;
-            evalParams.InPreExposure = 0.0f;
-            evalParams.InJitterOffsetX = pixelOffset.X;
-            evalParams.InJitterOffsetY = pixelOffset.Y;
-            evalParams.InMVScaleX = (float)params.SrcSize.X; // scale motion vectors from normalized [-1;1] to pixel-space
-            evalParams.InMVScaleY = (float)params.SrcSize.Y;
-            //evalParams.InMVScaleX = 1.0f;
-            //evalParams.InMVScaleY = 1.0f;
-            evalParams.InReset = renderContext.Task->IsCameraCut;
-            evalParams.InFrameTimeDeltaInMsec = (float)Time::Draw.UnscaledDeltaTime.GetTotalMilliseconds();
             result = NGX_D3D11_EVALUATE_DLSS_EXT((ID3D11DeviceContext*)contextNative, _paramsHandle, _parametersObject, &evalParams);
             break;
         }
     case RendererType::DirectX12:
         {
             NVSDK_NGX_D3D12_DLSS_Eval_Params evalParams;
-            Platform::MemoryClear(&evalParams, sizeof(evalParams));
+            InitParams(evalParams, params, renderContext, pixelOffset);
             evalParams.Feature.pInOutput = (ID3D12Resource*)output->GetNativePtr();
             evalParams.Feature.pInColor = (ID3D12Resource*)input->GetNativePtr();
             evalParams.pInDepth = (ID3D12Resource*)renderContext.Task->Buffers->DepthBuffer->GetNativePtr();
             evalParams.pInMotionVectors = renderContext.Task->Buffers->MotionVectors ? (ID3D12Resource*)renderContext.Task->Buffers->MotionVectors->GetNativePtr() : nullptr;
-            evalParams.InRenderSubrectDimensions.Width = params.SrcSize.X;
-            evalParams.InRenderSubrectDimensions.Height = params.SrcSize.Y;
-            evalParams.pInExposureTexture = nullptr;
-            evalParams.InPreExposure = 0.0f;
-            evalParams.InJitterOffsetX = pixelOffset.X;
-            evalParams.InJitterOffsetY = pixelOffset.Y;
-            evalParams.InMVScaleX = (float)params.SrcSize.X; // scale motion vectors from normalized [-1;1] to pixel-space
-            evalParams.InMVScaleY = (float)params.SrcSize.Y;
-            //evalParams.InMVScaleX = 1.0f;
-            //evalParams.InMVScaleY = 1.0f;
-            evalParams.InReset = renderContext.Task->IsCameraCut;
-            evalParams.InFrameTimeDeltaInMsec = (float)Time::Draw.UnscaledDeltaTime.GetTotalMilliseconds();
             result = NGX_D3D12_EVALUATE_DLSS_EXT((ID3D12GraphicsCommandList*)contextNative, _paramsHandle, _parametersObject, &evalParams);
 
             // Ensure that root signature and descriptor heaps are properly set after DLSS modified them
@@ -348,24 +342,12 @@ void NGXWrapper::TemporalResolve(GPUContext* context, RenderContext& renderConte
     case RendererType::Vulkan:
         {
             NVSDK_NGX_VK_DLSS_Eval_Params evalParams;
-            Platform::MemoryClear(&evalParams, sizeof(evalParams));
+            InitParams(evalParams, params, renderContext, pixelOffset);
             NVSDK_NGX_Resource_VK outputVk, inputVk, depthBufferVk, motionVectorsVk;
             GetVulkanResource(outputVk, output, evalParams.Feature.pInOutput);
             GetVulkanResource(inputVk, input, evalParams.Feature.pInColor);
             GetVulkanResource(depthBufferVk, renderContext.Task->Buffers->DepthBuffer, evalParams.pInDepth);
             GetVulkanResource(motionVectorsVk, renderContext.Task->Buffers->MotionVectors, evalParams.pInMotionVectors);
-            evalParams.InRenderSubrectDimensions.Width = params.SrcSize.X;
-            evalParams.InRenderSubrectDimensions.Height = params.SrcSize.Y;
-            evalParams.pInExposureTexture = nullptr;
-            evalParams.InPreExposure = 0.0f;
-            evalParams.InJitterOffsetX = pixelOffset.X;
-            evalParams.InJitterOffsetY = pixelOffset.Y;
-            evalParams.InMVScaleX = (float)params.SrcSize.X; // scale motion vectors from normalized [-1;1] to pixel-space
-            evalParams.InMVScaleY = (float)params.SrcSize.Y;
-            //evalParams.InMVScaleX = 1.0f;
-            //evalParams.InMVScaleY = 1.0f;
-            evalParams.InReset = renderContext.Task->IsCameraCut;
-            evalParams.InFrameTimeDeltaInMsec = (float)Time::Draw.UnscaledDeltaTime.GetTotalMilliseconds();
             result = NGX_VULKAN_EVALUATE_DLSS_EXT((VkCommandBuffer)contextNative, _paramsHandle, _parametersObject, &evalParams);
             break;
         }

@@ -3,6 +3,7 @@
 #include "Engine/Profiler/Profiler.h"
 #include "Engine/Scripting/Plugins/PluginManager.h"
 #include "Engine/Graphics/GPUContext.h"
+#include "Engine/Graphics/RenderBuffers.h"
 #include "Engine/Graphics/RenderContext.h"
 #include "Engine/Graphics/RenderTargetPool.h"
 #include "Engine/Graphics/Textures/GPUTexture.h"
@@ -16,7 +17,7 @@ DLSSPostFx::DLSSPostFx(const SpawnParams& params)
 
 bool DLSSPostFx::CanRender(const RenderContext& renderContext) const
 {
-    if (renderContext.Task->RenderScale >= 1.0f)
+    if (renderContext.Task->RenderScale >= 1.0f || renderContext.Buffers->GetSize().MinValue() < 32)
         return false;
 
     auto dlss = PluginManager::GetPlugin<DLSS>();
@@ -36,6 +37,10 @@ void DLSSPostFx::PreRender(GPUContext* context, RenderContext& renderContext)
 
     // Disable anti-aliasing
     renderContext.List->Settings.AntiAliasing.Mode = AntialiasingMode::None;
+
+    // Render Motion Vectors at full-res
+    renderContext.List->Setup.UseMotionVectors = true;
+    renderContext.List->Settings.MotionBlur.MotionVectorsResolution = ResolutionMode::Full;
 }
 
 void DLSSPostFx::Render(GPUContext* context, RenderContext& renderContext, GPUTexture* input, GPUTexture* output)
