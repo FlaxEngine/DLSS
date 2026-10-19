@@ -117,6 +117,11 @@ bool NGXWrapper::Initialize(uint32 appId, const StringAnsi& projectId, DLSSSuppo
 #if GRAPHICS_API_VULKAN
     case RendererType::Vulkan:
         {
+            // TODO: call this before GPUDeviceVulkan creation (eg. early in the frame), add a way for game modules to load early in engine startup
+            unsigned int instanceExtCount = 0, deviceExtCount = 0;
+            const char** instanceExt = nullptr, **deviceExt = nullptr;
+            result = NVSDK_NGX_VULKAN_RequiredExtensions(&instanceExtCount, &instanceExt, &deviceExtCount, &deviceExt);
+
             VkInstance vkInstance = (VkInstance)((void**)gpuDeviceNative)[0];
             VkDevice vkDevice = (VkDevice)((void**)gpuDeviceNative)[1];
             VkPhysicalDevice vkPhysicalDevice = (VkPhysicalDevice)gpuDevice->GetAdapter()->GetNativePtr();
